@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stickerzz - Dein Sticker-Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* Verbesserte CSS-Anpassungen */
+      .sticker-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+      .sticker-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      .suggestion-list {
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 50;
+      }
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+      }
+      .main-content-area {
+        padding-bottom: 120px; /* Platz für den Footer */
+      }
+      .hamburger {
+        cursor: pointer;
+      }
+      .hamburger div {
+        width: 25px;
+        height: 3px;
+        background-color: white;
+        margin: 5px 0;
+        transition: all 0.3s ease;
+      }
+      .nav-open .hamburger div:nth-child(1) {
+        transform: rotate(-45deg) translate(-5px, 6px);
+      }
+      .nav-open .hamburger div:nth-child(2) {
+        opacity: 0;
+      }
+      .nav-open .hamburger div:nth-child(3) {
+        transform: rotate(45deg) translate(-5px, -6px);
+      }
+      .nav-menu {
+        display: none;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background-color: #1e40af;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 40;
+      }
+      .nav-open .nav-menu {
+        display: block;
+      }
+      @media (min-width: 640px) {
+        .hamburger {
+          display: none;
+        }
+        .nav-menu {
+          display: flex;
+          position: static;
+          background-color: transparent;
+          padding: 0;
+          box-shadow: none;
+        }
+      }
+      /* Toast-Benachrichtigung */
+      .toast {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background-color: #4caf50;
+        color: white;
+        padding: 16px;
+        border-radius: 5px;
+        z-index: 100;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: translateX(150%);
+        transition: transform 0.5s ease;
+      }
+      .toast.show {
+        transform: translateX(0);
+      }
+      .cart-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+      .sticky-cart-button {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 30;
+        display: none;
+      }
+      @media (max-width: 639px) {
+        .sticky-cart-button {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gradient-custom font-sans min-h-screen relative">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+      <div class="flex items-center">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="toastMessage"></span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-blue-700 text-white p-4 sticky top-0 shadow-lg z-10">
+      <div class="container mx-auto flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-bookmark text-yellow-300 text-2xl"></i>
+          <h1 class="text-3xl font-bold">Stickerzz</h1>
+        </div>
+        <div class="flex items-center">
+          <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <nav class="nav-menu" id="navMenu">
+            <a
+              href="#"
+              class="block px-4 py-2 text-white hover:bg-blue-800 rounded transition-colors duration-200 flex items-center"
+              onclick="showSection('home')"
+            >
+              <i class="fas fa-home mr-2"></i>Startseite
+            </a>
+            <a
+              href="#"
+              class="block px-4 py-2 text-white hover:bg-blue-800 rounded transition-colors duration-200 flex items-center relative"
+              onclick="showSection('cart')"
+            >
+              <i class="fas fa-shopping-cart mr-2"></i>Einkaufskorb
+              <span id="navCartBadge" class="cart-badge hidden">0</span>
+            </a>
+          </nav>
+          <div id="loginSection" class="ml-4"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="container mx-auto p-4 sm:p-6 main-content-area"
+      id="mainContent"
+    >
+      <!-- Home Section -->
+      <section id="homeSection">
+        <!-- Willkommensbanner -->
+        <div
+          class="bg-blue-600 text-white p-4 rounded-lg shadow-lg mb-6 flex items-center"
+        >
+          <div>
+            <h2 class="text-2xl font-bold">Willkommen bei Stickerzz!</h2>
+            <p class="mt-1">
+              Entdecke unsere Auswahl an hochwertigen Stickern für jeden
+              Geschmack.
+            </p>
+          </div>
+          <img
+            src="logo-stickerzz.png"
+            alt="Sticker Artwork"
+            class="w-16 h-16 ml-auto rounded-full border-2 border-white hidden sm:block"
+          />
+        </div>
+
+        <!-- Search and Category Filter -->
+        <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="relative w-full sm:w-3/4">
+              <div class="flex items-center">
+                <i class="fas fa-search absolute left-3 text-gray-400"></i>
+                <input
+                  type="text"
+                  id="searchInput"
+                  placeholder="Suche nach Stickern..."
+                  class="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  onkeyup="filterStickers()"
+                  onfocus="showSuggestions()"
+                />
+                <button
+                  id="clearSearch"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden"
+                  onclick="clearSearch()"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <ul
+                id="suggestions"
+                class="absolute w-full bg-white border border-gray-300 rounded-lg mt-1 hidden suggestion-list shadow-lg"
+              ></ul>
+            </div>
+            <div class="relative w-full sm:w-1/4">
+              <i
+                class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              ></i>
+              <select
+                id="categoryFilter"
+                class="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                onchange="filterStickers()"
+              >
+                <option value="Alle">Alle Kategorien</option>
+                <option value="Fußballclub">Fußballclub</option>
+                <option value="Land">Land</option>
+                <option value="Fantasy">Fantasy</option>
+                <option value="Essen">Essen</option>
+              </select>
+              <i
+                class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+              ></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kategorie-Schnellauswahl -->
+        <div class="flex overflow-x-auto pb-2 mb-6 space-x-4">
+          <button
+            onclick="selectCategory('Alle')"
+            class="category-pill bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full whitespace-nowrap flex items-center transition-colors"
+          >
+            <i class="fas fa-globe mr-2"></i>Alle
+          </button>
+          <button
+            onclick="selectCategory('Fußballclub')"
+            class="category-pill bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full whitespace-nowrap flex items-center transition-colors"
+          >
+            <i class="fas fa-futbol mr-2"></i>Fußballclubs
+          </button>
+          <button
+            onclick="selectCategory('Land')"
+            class="category-pill bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full whitespace-nowrap flex items-center transition-colors"
+          >
+            <i class="fas fa-flag mr-2"></i>Länder
+          </button>
+          <button
+            onclick="selectCategory('Fantasy')"
+            class="category-pill bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full whitespace-nowrap flex items-center transition-colors"
+          >
+            <i class="fas fa-magic mr-2"></i>Fantasy
+          </button>
+          <button
+            onclick="selectCategory('Essen')"
+            class="category-pill bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full whitespace-nowrap flex items-center transition-colors"
+          >
+            <i class="fas fa-pizza-slice mr-2"></i>Essen
+          </button>
+        </div>
+
+        <!-- Sticker Gallery -->
+        <div
+          id="stickerGallery"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        ></div>
+      </section>
+
+      <!-- Cart Section -->
+      <section id="cartSection" class="hidden">
+        <h2 class="text-3xl font-bold mb-6 flex items-center">
+          <i class="fas fa-shopping-cart text-blue-600 mr-3"></i>Dein
+          Einkaufskorb
+        </h2>
+
+        <div
+          id="emptyCartMessage"
+          class="hidden bg-gray-100 p-8 rounded-lg text-center"
+        >
+          <i class="fas fa-shopping-cart text-gray-400 text-5xl mb-4"></i>
+          <h3 class="text-xl font-semibold text-gray-600">
+            Dein Warenkorb ist leer
+          </h3>
+          <p class="text-gray-500 mt-2">
+            Füge einige Sticker hinzu, um loszulegen!
+          </p>
+          <button
+            onclick="showSection('home')"
+            class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center mx-auto"
+          >
+            <i class="fas fa-shopping-bag mr-2"></i>Weiter einkaufen
+          </button>
+        </div>
+
+        <div id="cartContent" class="p-6 bg-white rounded-lg shadow-lg">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+              <h3
+                class="text-xl font-semibold mb-4 pb-2 border-b border-gray-200"
+              >
+                Artikel (<span id="cartCount">0</span>)
+              </h3>
+              <ul id="cartItems" class="divide-y divide-gray-200"></ul>
+            </div>
+
+            <div class="md:col-span-1">
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-xl font-semibold mb-4">Zusammenfassung</h3>
+                <div class="flex justify-between mb-2">
+                  <span>Zwischensumme</span>
+                  <span id="cartSubtotal" class="font-semibold">€0.00</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span>Versand</span>
+                  <span>Kostenlos</span>
+                </div>
+                <div
+                  class="border-t border-gray-300 my-4 pt-4 flex justify-between"
+                >
+                  <span class="text-lg font-bold">Gesamt</span>
+                  <span id="cartTotal" class="text-lg font-bold">€0.00</span>
+                </div>
+
+                <button
+                  onclick="handlePurchase()"
+                  class="mt-4 w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center"
+                >
+                  <i class="fas fa-credit-card mr-2"></i>Jetzt kaufen
+                </button>
+
+                <div class="mt-6 p-4 bg-red-50 rounded-lg">
+                  <p class="text-red-700 font-semibold flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    Wichtiger Hinweis
+                  </p>
+                  <p class="text-red-600 text-sm mt-1">
+                    Alle Käufe sind endgültig. Es gibt keine Rückerstattungen
+                    oder Umtausch.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Sticky Cart Button for Mobile -->
+    <button
+      onclick="showSection('cart')"
+      class="sticky-cart-button bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center"
+    >
+      <i class="fas fa-shopping-cart text-xl"></i>
+      <span id="mobileCartBadge" class="cart-badge">0</span>
+    </button>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white p-6 fixed-footer">
+      <div
+        class="container mx-auto flex flex-col md:flex-row justify-between items-center"
+      >
+        <div>
+          <div class="flex items-center mb-2">
+            <i class="fas fa-bookmark text-yellow-300 mr-2"></i>
+            <span class="font-bold text-lg">Stickerzz</span>
+          </div>
+          <p class="text-sm">© 2025 Stickerzz. Alle Rechte vorbehalten.</p>
+          <p class="text-sm mt-1 text-gray-400">
+            Keine Rückerstattungen möglich.
+          </p>
+        </div>
+        <div
+          class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 mt-4 md:mt-0"
+        >
+          <a href="#" class="hover:text-blue-300 transition flex items-center">
+            <i class="fab fa-instagram mr-2"></i>Instagram
+          </a>
+          <a href="#" class="hover:text-blue-300 transition flex items-center">
+            <i class="fab fa-twitter mr-2"></i>Twitter
+          </a>
+          <a href="#" class="hover:text-blue-300 transition flex items-center">
+            <i class="fab fa-facebook mr-2"></i>Facebook
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Sticker-Daten
+      const stickers = [
+        {
+          id: 1,
+          name: "FC Bayern München",
+          category: "Fußballclub",
+          price: 2.99,
+          image: "https://via.placeholder.com/150?text=Bayern+Logo",
+          rating: 4.5,
+          details: "Offizieller FC Bayern München Sticker in Premium-Qualität.",
+        },
+        {
+          id: 2,
+          name: "Deutschland Flagge",
+          category: "Land",
+          price: 1.99,
+          image: "https://via.placeholder.com/150?text=DE+Flagge",
+          rating: 4.2,
+          details: "Hochwertige Deutschland-Flagge im Sticker-Format.",
+        },
+        {
+          id: 3,
+          name: "Borussia Dortmund",
+          category: "Fußballclub",
+          price: 2.99,
+          image: "https://via.placeholder.com/150?text=BVB+Logo",
+          rating: 4.4,
+          details: "Offizieller BVB Sticker für echte Fans.",
+        },
+        {
+          id: 4,
+          name: "Italien Flagge",
+          category: "Land",
+          price: 1.99,
+          image: "https://via.placeholder.com/150?text=IT+Flagge",
+          rating: 4.0,
+          details:
+            "Italien-Flagge im Sticker-Format, wasser- und UV-beständig.",
+        },
+        {
+          id: 5,
+          name: "Real Madrid",
+          category: "Fußballclub",
+          price: 3.49,
+          image: "https://via.placeholder.com/150?text=Real+Logo",
+          rating: 4.8,
+          details: "Offizieller Real Madrid Sticker in Premium-Qualität.",
+        },
+        {
+          id: 6,
+          name: "Frankreich Flagge",
+          category: "Land",
+          price: 1.99,
+          image: "https://via.placeholder.com/150?text=FR+Flagge",
+          rating: 4.1,
+          details: "Hochwertige Frankreich-Flagge im Sticker-Format.",
+        },
+        {
+          id: 7,
+          name: "FC Barcelona",
+          category: "Fußballclub",
+          price: 3.49,
+          image: "https://via.placeholder.com/150?text=Barca+Logo",
+          rating: 4.7,
+          details: "Offizieller FC Barcelona Sticker für wahre Fans.",
+        },
+        {
+          id: 8,
+          name: "Japan Flagge",
+          category: "Land",
+          price: 1.99,
+          image: "https://via.placeholder.com/150?text=JP+Flagge",
+          rating: 4.3,
+          details: "Japan-Flagge im Sticker-Format, langlebig und wetterfest.",
+        },
+        {
+          id: 9,
+          name: "Einhorn Glitzer",
+          category: "Fantasy",
+          price: 2.49,
+          image: "https://via.placeholder.com/150?text=Einhorn",
+          rating: 4.9,
+          details: "Magischer Einhorn-Sticker mit echtem Glitzereffekt.",
+        },
+        {
+          id: 10,
+          name: "Pizza Party",
+          category: "Essen",
+          price: 2.29,
+          image: "https://via.placeholder.com/150?text=Pizza",
+          rating: 4.6,
+          details: "Leckerer Pizza-Sticker für alle Food-Fans.",
+        },
+      ];
+
+      // Suchvorschläge
+      const suggestions = [
+        "Fußballclub",
+        "Land",
+        "Fantasy",
+        "Essen",
+        "Bayern",
+        "Deutschland",
+        "Einhorn",
+        "Pizza",
+        "Madrid",
+        "Barcelona",
+      ];
+
+      let user = null;
+      let cart = [];
+
+      // Toast-Benachrichtigung anzeigen
+      function showToast(message, type = "success") {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toastMessage");
+        toastMessage.textContent = message;
+
+        // Farbe anpassen je nach Typ
+        if (type === "success") {
+          toast.style.backgroundColor = "#4CAF50";
+        } else if (type === "error") {
+          toast.style.backgroundColor = "#f44336";
+        } else if (type === "info") {
+          toast.style.backgroundColor = "#2196F3";
+        }
+
+        toast.classList.add("show");
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 3000);
+      }
+
+      // Login-Funktion
+      function login() {
+        const email = prompt("Bitte gib deine E-Mail ein:");
+        if (!email) return;
+
+        const password = prompt("Bitte gib dein Passwort ein:");
+        if (!password) return;
+
+        user = { email };
+        document.getElementById("loginSection").innerHTML = `
+          <div class="flex items-center">
+            <div class="hidden sm:block">
+              <span class="text-sm mr-2">Hallo, ${
+                user.email.split("@")[0]
+              }</span>
+            </div>
+            <div class="relative group">
+              <button class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded-lg transition flex items-center">
+                <i class="fas fa-user mr-2"></i>
+                <span class="hidden sm:inline">Konto</span>
+                <i class="fas fa-caret-down ml-1"></i>
+              </button>
+              <div class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block z-20">
+                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                  <i class="fas fa-cog mr-2 text-gray-600"></i>Einstellungen
+                </a>
+                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                  <i class="fas fa-history mr-2 text-gray-600"></i>Bestellverlauf
+                </a>
+                <div class="border-t border-gray-200 my-1"></div>
+                <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50">
+                  <i class="fas fa-sign-out-alt mr-2"></i>Abmelden
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+        showToast(`Willkommen zurück, ${user.email.split("@")[0]}!`);
+      }
+
+      // Logout-Funktion
+      function logout() {
+        user = null;
+        document.getElementById("loginSection").innerHTML = `
+        <button onclick="login()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center">
+          <i class="fas fa-sign-in-alt mr-2"></i>
+          <span class="hidden sm:inline">Anmelden</span>
+        </button>
+      `;
+        cart = [];
+        updateCart();
+        showSection("home");
+        showToast("Erfolgreich abgemeldet!", "info");
+      }
+
+      // Initiales Login-Setup
+      document.getElementById("loginSection").innerHTML = `
+      <button onclick="login()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center">
+        <i class="fas fa-sign-in-alt mr-2"></i>
+        <span class="hidden sm:inline">Anmelden</span>
+      </button>
+    `;
+
+      // Sterne-Bewertung anzeigen
+      function getStarRating(rating) {
+        const fullStars = Math.floor(rating);
+        const halfStar = rating % 1 >= 0.5;
+        let stars = "";
+
+        // Volle Sterne
+        for (let i = 0; i < fullStars; i++) {
+          stars += '<i class="fas fa-star text-yellow-400"></i>';
+        }
+
+        // Halber Stern wenn nötig
+        if (halfStar) {
+          stars += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+        }
+
+        // Leere Sterne auffüllen
+        const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+          stars += '<i class="far fa-star text-yellow-400"></i>';
+        }
+
+        return stars;
+      }
+
+      // Sticker-Galerie rendern mit verbesserten Karten
+      function renderStickers(filteredStickers) {
+        const gallery = document.getElementById("stickerGallery");
+        gallery.innerHTML = "";
+
+        if (filteredStickers.length === 0) {
+          gallery.innerHTML = `
+            <div class="col-span-full text-center p-8">
+              <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
+              <p class="text-xl text-gray-500">Keine Sticker gefunden.</p>
+              <button onclick="clearSearch()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                Suche zurücksetzen
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        filteredStickers.forEach((sticker) => {
+          const card = document.createElement("div");
+          card.className =
+            "bg-white rounded-lg shadow-lg sticker-card overflow-hidden";
+          card.innerHTML = `
+            <div class="relative overflow-hidden">
+              <img src="${sticker.image}" alt="${
+            sticker.name
+          }" class="w-full h-48 object-cover">
+              <div class="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                ${sticker.category}
+              </div>
+            </div>
+            <div class="p-4">
+              <h3 class="text-lg font-semibold">${sticker.name}</h3>
+              <div class="flex items-center mt-1">
+                ${getStarRating(sticker.rating)}
+                <span class="text-xs text-gray-600 ml-1">(${
+                  sticker.rating
+                })</span>
+              </div>
+              <p class="text-sm text-gray-600 mt-2 line-clamp-2">${
+                sticker.details
+              }</p>
+              <div class="flex justify-between items-center mt-4">
+                <p class="text-blue-600 font-bold text-xl">€${sticker.price.toFixed(
+                  2
+                )}</p>
+                <button 
+                  onclick="addToCart(${sticker.id})" 
+                  class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
+                >
+                  <i class="fas fa-cart-plus"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          gallery.appendChild(card);
+        });
+      }
+
+      // Suchvorschläge anzeigen
+      function showSuggestions() {
+        const searchInput = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        const suggestionList = document.getElementById("suggestions");
+
+        if (searchInput) {
+          const filteredSuggestions = suggestions.filter((s) =>
+            s.toLowerCase().includes(searchInput)
+          );
+
+          if (filteredSuggestions.length > 0) {
+            suggestionList.innerHTML = filteredSuggestions
+              .map(
+                (s) =>
+                  `<li class="p-3 hover:bg-blue-50 cursor-pointer flex items-center" onclick="selectSuggestion('${s}')">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>${s}
+                  </li>`
+              )
+              .join("");
+            suggestionList.classList.remove("hidden");
+          } else {
+            suggestionList.classList.add("hidden");
+          }
+
+          document.getElementById("clearSearch").classList.remove("hidden");
+        } else {
+          suggestionList.classList.add("hidden");
+          document.getElementById("clearSearch").classList.add("hidden");
+        }
+      }
+
+      // Vorschlag auswählen
+      function selectSuggestion(suggestion) {
+        document.getElementById("searchInput").value = suggestion;
+        document.getElementById("suggestions").classList.add("hidden");
+        filterStickers();
+      }
+
+      // Suche löschen
+      function clearSearch() {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("suggestions").classList.add("hidden");
+        document.getElementById("clearSearch").classList.add("hidden");
+        filterStickers();
+      }
+
+      // Kategorie über die Schnellauswahl setzen
+      function selectCategory(category) {
+        document.getElementById("categoryFilter").value = category;
+        filterStickers();
+
+        // Visuelles Feedback für ausgewählte Kategorie
+        const pills = document.querySelectorAll(".category-pill");
+        pills.forEach((pill) => {
+          const pillText = pill.textContent.trim();
+          if (
+            pillText === category ||
+            (category === "Alle" && pillText === "Alle")
+          ) {
+            pill.classList.add("bg-blue-500", "text-white");
+            pill.classList.remove("bg-blue-100", "text-blue-800");
+          } else {
+            pill.classList.add("bg-blue-100", "text-blue-800");
+            pill.classList.remove("bg-blue-500", "text-white");
+          }
+        });
+      }
+
+      // Sticker filtern
+      function filterStickers() {
+        const searchTerm = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        const category = document.getElementById("categoryFilter").value;
+        let filtered = stickers;
+
+        if (category !== "Alle") {
+          filtered = filtered.filter(
+            (sticker) => sticker.category === category
+          );
+        }
+
+        filtered = filtered.filter(
+          (sticker) =>
+            sticker.name.toLowerCase().includes(searchTerm) ||
+            sticker.category.toLowerCase().includes(searchTerm) ||
+            sticker.details.toLowerCase().includes(searchTerm)
+        );
+
+        renderStickers(filtered);
+        showSuggestions();
+      }
+
+      // Warenkorb-Badge aktualisieren
+      function updateCartBadges() {
+        const count = cart.length;
+        const navBadge = document.getElementById("navCartBadge");
+        const mobileBadge = document.getElementById("mobileCartBadge");
+
+        if (count > 0) {
+          navBadge.textContent = count;
+          navBadge.classList.remove("hidden");
+          mobileBadge.textContent = count;
+          mobileBadge.classList.remove("hidden");
+        } else {
+          navBadge.classList.add("hidden");
+          mobileBadge.classList.add("hidden");
+        }
+      }
+
+      // Warenkorb aktualisieren
+      function updateCart() {
+        const cartItems = document.getElementById("cartItems");
+        const cartTotal = document.getElementById("cartTotal");
+        const cartSubtotal = document.getElementById("cartSubtotal");
+        const cartCount = document.getElementById("cartCount");
+        const emptyCartMessage = document.getElementById("emptyCartMessage");
+        const cartContent = document.getElementById("cartContent");
+
+        // Warenkorbzähler aktualisieren
+        cartCount.textContent = cart.length;
+
+        // Leeren Warenkorb anzeigen, wenn keine Artikel vorhanden sind
+        if (cart.length === 0) {
+          emptyCartMessage.classList.remove("hidden");
+          cartContent.classList.add("hidden");
+        } else {
+          emptyCartMessage.classList.add("hidden");
+          cartContent.classList.remove("hidden");
+        }
+
+        // Warenkorb-Elemente rendern
+        cartItems.innerHTML = "";
+        if (cart.length > 0) {
+          cart.forEach((item, index) => {
+            const li = document.createElement("li");
+            li.className = "py-4 flex items-center";
+            li.innerHTML = `
+              <img src="${item.image}" alt="${
+              item.name
+            }" class="w-16 h-16 object-cover rounded mr-4">
+              <div class="flex-grow">
+                <h4 class="font-semibold">${item.name}</h4>
+                <p class="text-gray-600 text-sm">${item.category}</p>
+              </div>
+              <div class="flex items-center">
+                <span class="mr-4 font-semibold">€${item.price.toFixed(
+                  2
+                )}</span>
+                <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 transition">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+            cartItems.appendChild(li);
+          });
+
+          const total = cart
+            .reduce((sum, item) => sum + item.price, 0)
+            .toFixed(2);
+          cartTotal.textContent = `€${total}`;
+          cartSubtotal.textContent = `€${total}`;
+        } else {
+          cartTotal.textContent = "€0.00";
+          cartSubtotal.textContent = "€0.00";
+        }
+
+        // Warenkorb-Badges aktualisieren
+        updateCartBadges();
+      }
+
+      // Artikel aus dem Warenkorb entfernen
+      function removeFromCart(index) {
+        const removed = cart.splice(index, 1)[0];
+        updateCart();
+        showToast(
+          `${removed.name} wurde aus deinem Warenkorb entfernt.`,
+          "info"
+        );
+      }
+
+      // Artikel zum Warenkorb hinzufügen
+      function addToCart(stickerId) {
+        const sticker = stickers.find((s) => s.id === stickerId);
+        if (sticker) {
+          cart.push(sticker);
+          updateCart();
+          showToast(`${sticker.name} wurde zu deinem Warenkorb hinzugefügt!`);
+        }
+      }
+
+      // Kaufprozess
+      function handlePurchase() {
+        if (!user) {
+          showToast("Bitte melde dich an, um zu kaufen!", "error");
+          setTimeout(() => login(), 1000);
+          return;
+        }
+
+        if (cart.length === 0) {
+          showToast("Dein Warenkorb ist leer!", "error");
+          return;
+        }
+
+        const total = cart
+          .reduce((sum, item) => sum + item.price, 0)
+          .toFixed(2);
+
+        // Erfolgsmeldung mit mehr Details
+        showToast("Bestellung erfolgreich aufgegeben!", "success");
+
+        setTimeout(() => {
+          alert(
+            `Bestellung erfolgreich!\n\nDetails:\n- Bestellnummer: #${Math.floor(
+              Math.random() * 1000000
+            )}\n- Versand an: ${user.email}\n- Artikel: ${
+              cart.length
+            }\n- Gesamtbetrag: €${total}\n\nEine Bestätigungs-E-Mail wurde an ${
+              user.email
+            } gesendet.\n\nHinweis: Bestellungen sind endgültig, keine Rückerstattungen möglich.`
+          );
+        }, 1000);
+
+        cart = [];
+        updateCart();
+        showSection("home");
+      }
+
+      // Menü umschalten
+      function toggleMenu() {
+        document.body.classList.toggle("nav-open");
+      }
+
+      // Sektion anzeigen
+      function showSection(section) {
+        const sections = document.querySelectorAll("section");
+        sections.forEach((s) => s.classList.add("hidden"));
+        document.getElementById(`${section}Section`).classList.remove("hidden");
+        document.body.classList.remove("nav-open");
+
+        // Scroll nach oben
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // Kategoriepills zurücksetzen wenn Startseite angezeigt wird
+        if (section === "home") {
+          selectCategory(document.getElementById("categoryFilter").value);
+        }
+      }
+
+      // Initiales Rendern
+      renderStickers(stickers);
+      updateCart();
+      showSection("home");
+
+      // Event Listener für Suchfeld
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", function () {
+          if (this.value) {
+            document.getElementById("clearSearch").classList.remove("hidden");
+          } else {
+            document.getElementById("clearSearch").classList.add("hidden");
+          }
+        });
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("blur", () =>
+          setTimeout(
+            () =>
+              document.getElementById("suggestions").classList.add("hidden"),
+            200
+          )
+        );
+
+      // Kategoriepills initialisieren
+      selectCategory("Alle");
+    </script>
+  </body>
+</html>
