@@ -10,7 +10,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
     <style>
-      /* Verbesserte CSS-Anpassungen */
       .sticker-card {
         transition: transform 0.3s, box-shadow 0.3s;
       }
@@ -27,7 +26,7 @@
         background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
       }
       .main-content-area {
-        padding-bottom: 120px; /* Platz für den Footer */
+        padding-bottom: 120px;
       }
       .hamburger {
         cursor: pointer;
@@ -74,7 +73,6 @@
           box-shadow: none;
         }
       }
-      /* Toast-Benachrichtigung */
       .toast {
         position: fixed;
         top: 80px;
@@ -117,6 +115,49 @@
           display: flex;
         }
       }
+      .auth-form {
+        max-width: 400px;
+        margin: 2rem auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        display: block;
+      }
+      .auth-form input {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .auth-form input:focus {
+        border-color: #3b82f6;
+      }
+      .auth-form button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .auth-form button:hover {
+        background: #2563eb;
+      }
+      .auth-form .toggle-link {
+        text-align: center;
+        margin-top: 1rem;
+        color: #3b82f6;
+        cursor: pointer;
+      }
+      .auth-form .toggle-link:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body class="bg-gradient-custom font-sans min-h-screen relative">
@@ -145,17 +186,26 @@
             <a
               href="#"
               class="block px-4 py-2 text-white hover:bg-blue-800 rounded transition-colors duration-200 flex items-center"
-              onclick="showSection('home')"
+              onclick="showSection('homeSection')"
             >
               <i class="fas fa-home mr-2"></i>Startseite
             </a>
             <a
               href="#"
               class="block px-4 py-2 text-white hover:bg-blue-800 rounded transition-colors duration-200 flex items-center relative"
-              onclick="showSection('cart')"
+              onclick="showSection('cartSection')"
             >
               <i class="fas fa-shopping-cart mr-2"></i>Einkaufskorb
               <span id="navCartBadge" class="cart-badge hidden">0</span>
+            </a>
+            <a
+              href="#"
+              class="block px-4 py-2 text-white hover:bg-blue-800 rounded transition-colors duration-200 flex items-center"
+              onclick="showSection('adminSection')"
+              id="adminNavLink"
+              style="display: none"
+            >
+              <i class="fas fa-user-shield mr-2"></i>Admin Dashboard
             </a>
           </nav>
           <div id="loginSection" class="ml-4"></div>
@@ -170,7 +220,6 @@
     >
       <!-- Home Section -->
       <section id="homeSection">
-        <!-- Willkommensbanner -->
         <div
           class="bg-blue-600 text-white p-4 rounded-lg shadow-lg mb-6 flex items-center"
         >
@@ -188,7 +237,6 @@
           />
         </div>
 
-        <!-- Search and Category Filter -->
         <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
           <div class="flex flex-col sm:flex-row gap-4">
             <div class="relative w-full sm:w-3/4">
@@ -237,7 +285,6 @@
           </div>
         </div>
 
-        <!-- Kategorie-Schnellauswahl -->
         <div class="flex overflow-x-auto pb-2 mb-6 space-x-4">
           <button
             onclick="selectCategory('Alle')"
@@ -271,7 +318,6 @@
           </button>
         </div>
 
-        <!-- Sticker Gallery -->
         <div
           id="stickerGallery"
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
@@ -297,7 +343,7 @@
             Füge einige Sticker hinzu, um loszulegen!
           </p>
           <button
-            onclick="showSection('home')"
+            onclick="showSection('homeSection')"
             class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center mx-auto"
           >
             <i class="fas fa-shopping-bag mr-2"></i>Weiter einkaufen
@@ -355,11 +401,133 @@
           </div>
         </div>
       </section>
+
+      <!-- Login Section -->
+      <section id="loginSectionMain" class="hidden">
+        <div id="authContainer" class="auth-form">
+          <div id="loginForm">
+            <h2 class="text-2xl font-bold mb-4 text-center">Anmelden</h2>
+            <div>
+              <label
+                for="loginEmail"
+                class="block text-sm font-medium text-gray-700"
+                >E-Mail</label
+              >
+              <input
+                type="email"
+                id="loginEmail"
+                placeholder="E-Mail eingeben"
+                required
+              />
+            </div>
+            <div>
+              <label
+                for="loginPassword"
+                class="block text-sm font-medium text-gray-700"
+                >Passwort</label
+              >
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Passwort eingeben"
+                required
+              />
+            </div>
+            <button onclick="handleLogin()">Anmelden</button>
+            <p class="toggle-link" onclick="toggleAuthForm('register')">
+              Noch kein Konto? Registrieren
+            </p>
+          </div>
+          <div id="registerForm" class="hidden">
+            <h2 class="text-2xl font-bold mb-4 text-center">Registrieren</h2>
+            <div>
+              <label
+                for="registerEmail"
+                class="block text-sm font-medium text-gray-700"
+                >E-Mail</label
+              >
+              <input
+                type="email"
+                id="registerEmail"
+                placeholder="E-Mail eingeben"
+                required
+              />
+            </div>
+            <div>
+              <label
+                for="registerPassword"
+                class="block text-sm font-medium text-gray-700"
+                >Passwort</label
+              >
+              <input
+                type="password"
+                id="registerPassword"
+                placeholder="Passwort eingeben"
+                required
+              />
+            </div>
+            <div>
+              <label
+                for="confirmPassword"
+                class="block text-sm font-medium text-gray-700"
+                >Passwort bestätigen</label
+              >
+              <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Passwort bestätigen"
+                required
+              />
+            </div>
+            <button onclick="handleRegister()">Registrieren</button>
+            <p class="toggle-link" onclick="toggleAuthForm('login')">
+              Bereits registriert? Anmelden
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin Dashboard Section -->
+      <section id="adminSection" class="hidden">
+        <h2 class="text-3xl font-bold mb-6 flex items-center">
+          <i class="fas fa-user-shield text-blue-600 mr-3"></i>Admin Dashboard
+        </h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-semibold mb-4">Registrierte Benutzer</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full table-auto border-collapse">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="border px-4 py-2 text-left">E-Mail</th>
+                  <th class="border px-4 py-2 text-left">Rolle</th>
+                  <th class="border px-4 py-2 text-left">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+          <h3 class="text-xl font-semibold mt-8 mb-4">Bestellungen</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full table-auto border-collapse">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="border px-4 py-2 text-left">Bestellnummer</th>
+                  <th class="border px-4 py-2 text-left">Benutzer</th>
+                  <th class="border px-4 py-2 text-left">Artikel</th>
+                  <th class="border px-4 py-2 text-left">Gesamt</th>
+                  <th class="border px-4 py-2 text-left">Datum</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Sticky Cart Button for Mobile -->
     <button
-      onclick="showSection('cart')"
+      onclick="showSection('cartSection')"
       class="sticky-cart-button bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center"
     >
       <i class="fas fa-shopping-cart text-xl"></i>
@@ -401,6 +569,8 @@
     </footer>
 
     <script>
+      console.log("Script loaded at", new Date().toLocaleString());
+
       // Sticker-Daten
       const stickers = [
         {
@@ -512,14 +682,43 @@
 
       let user = null;
       let cart = [];
+      let orders = JSON.parse(localStorage.getItem("orders")) || [];
 
-      // Toast-Benachrichtigung anzeigen
+      // Simple hash function for client-side password hashing
+      function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = (hash << 5) - hash + char;
+          hash = hash & hash;
+        }
+        return hash.toString(16);
+      }
+
+      // Initialize users
+      function initUsers() {
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        if (!users.some((u) => u.email === "admin@stickerzz.de")) {
+          users.push({
+            email: "admin@stickerzz.de",
+            password: simpleHash("admin123"),
+            role: "admin",
+          });
+          localStorage.setItem("users", JSON.stringify(users));
+        }
+      }
+
+      // Toast-Benachrichtigung
       function showToast(message, type = "success") {
+        console.log(`Showing toast: ${message}, type: ${type}`);
         const toast = document.getElementById("toast");
         const toastMessage = document.getElementById("toastMessage");
+        if (!toast || !toastMessage) {
+          console.error("Toast elements not found");
+          return;
+        }
         toastMessage.textContent = message;
 
-        // Farbe anpassen je nach Typ
         if (type === "success") {
           toast.style.backgroundColor = "#4CAF50";
         } else if (type === "error") {
@@ -534,96 +733,224 @@
         }, 3000);
       }
 
-      // Login-Funktion
-      function login() {
-        const email = prompt("Bitte gib deine E-Mail ein:");
-        if (!email) return;
-
-        const password = prompt("Bitte gib dein Passwort ein:");
-        if (!password) return;
-
-        user = { email };
-        document.getElementById("loginSection").innerHTML = `
-          <div class="flex items-center">
-            <div class="hidden sm:block">
-              <span class="text-sm mr-2">Hallo, ${
-                user.email.split("@")[0]
-              }</span>
-            </div>
-            <div class="relative group">
-              <button class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded-lg transition flex items-center">
-                <i class="fas fa-user mr-2"></i>
-                <span class="hidden sm:inline">Konto</span>
-                <i class="fas fa-caret-down ml-1"></i>
-              </button>
-              <div class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block z-20">
-                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                  <i class="fas fa-cog mr-2 text-gray-600"></i>Einstellungen
-                </a>
-                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                  <i class="fas fa-history mr-2 text-gray-600"></i>Bestellverlauf
-                </a>
-                <div class="border-t border-gray-200 my-1"></div>
-                <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50">
-                  <i class="fas fa-sign-out-alt mr-2"></i>Abmelden
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-        showToast(`Willkommen zurück, ${user.email.split("@")[0]}!`);
+      // Toggle auth forms
+      function toggleAuthForm(form) {
+        console.log(`Toggling to ${form} form`);
+        const loginForm = document.getElementById("loginForm");
+        const registerForm = document.getElementById("registerForm");
+        if (loginForm && registerForm) {
+          loginForm.classList.toggle("hidden", form !== "login");
+          registerForm.classList.toggle("hidden", form !== "register");
+        } else {
+          console.error("Auth form elements not found");
+        }
       }
 
-      // Logout-Funktion
+      // Handle login
+      function handleLogin() {
+        console.log("Handling login");
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        if (!email || !password) {
+          showToast("Bitte fülle alle Felder aus!", "error");
+          return;
+        }
+
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        const hashedPassword = simpleHash(password);
+        const foundUser = users.find(
+          (u) => u.email === email && u.password === hashedPassword
+        );
+
+        if (foundUser) {
+          user = foundUser;
+          updateLoginSection();
+          showSection("homeSection");
+          showToast(`Willkommen zurück, ${user.email.split("@")[0]}!`);
+          if (user.role === "admin") {
+            document.getElementById("adminNavLink").style.display = "block";
+          }
+        } else {
+          showToast("Ungültige E-Mail oder Passwort!", "error");
+        }
+      }
+
+      // Handle registration
+      function handleRegister() {
+        console.log("Handling registration");
+        const email = document.getElementById("registerEmail").value.trim();
+        const password = document.getElementById("registerPassword").value;
+        const confirmPassword =
+          document.getElementById("confirmPassword").value;
+
+        if (!email || !password || !confirmPassword) {
+          showToast("Bitte fülle alle Felder aus!", "error");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          showToast("Passwörter stimmen nicht überein!", "error");
+          return;
+        }
+
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        if (users.some((u) => u.email === email)) {
+          showToast("E-Mail bereits registriert!", "error");
+          return;
+        }
+
+        users.push({
+          email,
+          password: simpleHash(password),
+          role: "user",
+        });
+        localStorage.setItem("users", JSON.stringify(users));
+        showToast("Registrierung erfolgreich! Bitte melde dich an.", "success");
+        toggleAuthForm("login");
+        document.getElementById("registerEmail").value = "";
+        document.getElementById("registerPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+      }
+
+      // Update login section
+      function updateLoginSection() {
+        console.log("Updating login section, user:", user);
+        try {
+          const loginSection = document.getElementById("loginSection");
+          if (!loginSection) {
+            console.error("loginSection element not found");
+            return;
+          }
+          if (user) {
+            loginSection.innerHTML = `
+              <div class="flex items-center">
+                <div class="hidden sm:block">
+                  <span class="text-sm mr-2">Hallo, ${
+                    user.email.split("@")[0]
+                  }</span>
+                </div>
+                <div class="relative group">
+                  <button class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded-lg transition flex items-center">
+                    <i class="fas fa-user mr-2"></i>
+                    <span class="hidden sm:inline">Konto</span>
+                    <i class="fas fa-caret-down ml-1"></i>
+                  </button>
+                  <div class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block z-20">
+                    <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                      <i class="fas fa-cog mr-2 text-gray-600"></i>Einstellungen
+                    </a>
+                    <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                      <i class="fas fa-history mr-2 text-gray-600"></i>Bestellverlauf
+                    </a>
+                    <div class="border-t border-gray-200 my-1"></div>
+                    <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50">
+                      <i class="fas fa-sign-out-alt mr-2"></i>Abmelden
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            loginSection.innerHTML = `
+              <button onclick="showSection('loginSectionMain')" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                <span class="hidden sm:inline">Anmelden</span>
+              </button>
+            `;
+          }
+        } catch (error) {
+          console.error("Error in updateLoginSection:", error);
+          showToast("Fehler beim Aktualisieren der Anmeldung!", "error");
+        }
+      }
+
+      // Logout
       function logout() {
+        console.log("Logging out");
         user = null;
-        document.getElementById("loginSection").innerHTML = `
-        <button onclick="login()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center">
-          <i class="fas fa-sign-in-alt mr-2"></i>
-          <span class="hidden sm:inline">Anmelden</span>
-        </button>
-      `;
         cart = [];
+        document.getElementById("adminNavLink").style.display = "none";
+        updateLoginSection();
         updateCart();
-        showSection("home");
+        showSection("homeSection");
         showToast("Erfolgreich abgemeldet!", "info");
       }
 
-      // Initiales Login-Setup
-      document.getElementById("loginSection").innerHTML = `
-      <button onclick="login()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center">
-        <i class="fas fa-sign-in-alt mr-2"></i>
-        <span class="hidden sm:inline">Anmelden</span>
-      </button>
-    `;
+      // Render Admin Dashboard
+      function renderAdminDashboard() {
+        console.log("Rendering admin dashboard");
+        if (!user || user.role !== "admin") {
+          showToast("Zugriff verweigert!", "error");
+          showSection("homeSection");
+          return;
+        }
 
-      // Sterne-Bewertung anzeigen
+        const usersTable = document.getElementById("usersTable");
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        usersTable.innerHTML = "";
+        users.forEach((u) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border px-4 py-2">${u.email}</td>
+            <td class="border px-4 py-2">${u.role}</td>
+            <td class="border px-4 py-2">
+              <button onclick="deleteUser('${u.email}')" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          usersTable.appendChild(tr);
+        });
+
+        const ordersTable = document.getElementById("ordersTable");
+        ordersTable.innerHTML = "";
+        orders.forEach((o) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border px-4 py-2">${o.orderId}</td>
+            <td class="border px-4 py-2">${o.userEmail}</td>
+            <td class="border px-4 py-2">${o.items.length} Artikel</td>
+            <td class="border px-4 py-2">€${o.total.toFixed(2)}</td>
+            <td class="border px-4 py-2">${new Date(
+              o.date
+            ).toLocaleString()}</td>
+          `;
+          ordersTable.appendChild(tr);
+        });
+      }
+
+      // Delete User
+      function deleteUser(email) {
+        console.log(`Deleting user: ${email}`);
+        if (!user || user.role !== "admin") return;
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        users = users.filter((u) => u.email !== email);
+        localStorage.setItem("users", JSON.stringify(users));
+        renderAdminDashboard();
+        showToast(`Benutzer ${email} gelöscht.`, "info");
+      }
+
+      // Star rating
       function getStarRating(rating) {
         const fullStars = Math.floor(rating);
         const halfStar = rating % 1 >= 0.5;
         let stars = "";
-
-        // Volle Sterne
         for (let i = 0; i < fullStars; i++) {
           stars += '<i class="fas fa-star text-yellow-400"></i>';
         }
-
-        // Halber Stern wenn nötig
         if (halfStar) {
           stars += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
         }
-
-        // Leere Sterne auffüllen
         const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
         for (let i = 0; i < emptyStars; i++) {
           stars += '<i class="far fa-star text-yellow-400"></i>';
         }
-
         return stars;
       }
 
-      // Sticker-Galerie rendern mit verbesserten Karten
+      // Render stickers
       function renderStickers(filteredStickers) {
+        console.log("Rendering stickers, count:", filteredStickers.length);
         const gallery = document.getElementById("stickerGallery");
         gallery.innerHTML = "";
 
@@ -681,7 +1008,7 @@
         });
       }
 
-      // Suchvorschläge anzeigen
+      // Show suggestions
       function showSuggestions() {
         const searchInput = document
           .getElementById("searchInput")
@@ -714,14 +1041,14 @@
         }
       }
 
-      // Vorschlag auswählen
+      // Select suggestion
       function selectSuggestion(suggestion) {
         document.getElementById("searchInput").value = suggestion;
         document.getElementById("suggestions").classList.add("hidden");
         filterStickers();
       }
 
-      // Suche löschen
+      // Clear search
       function clearSearch() {
         document.getElementById("searchInput").value = "";
         document.getElementById("suggestions").classList.add("hidden");
@@ -729,12 +1056,11 @@
         filterStickers();
       }
 
-      // Kategorie über die Schnellauswahl setzen
+      // Select category
       function selectCategory(category) {
         document.getElementById("categoryFilter").value = category;
         filterStickers();
 
-        // Visuelles Feedback für ausgewählte Kategorie
         const pills = document.querySelectorAll(".category-pill");
         pills.forEach((pill) => {
           const pillText = pill.textContent.trim();
@@ -751,7 +1077,7 @@
         });
       }
 
-      // Sticker filtern
+      // Filter stickers
       function filterStickers() {
         const searchTerm = document
           .getElementById("searchInput")
@@ -776,7 +1102,7 @@
         showSuggestions();
       }
 
-      // Warenkorb-Badge aktualisieren
+      // Update cart badges
       function updateCartBadges() {
         const count = cart.length;
         const navBadge = document.getElementById("navCartBadge");
@@ -793,8 +1119,9 @@
         }
       }
 
-      // Warenkorb aktualisieren
+      // Update cart
       function updateCart() {
+        console.log("Updating cart, items:", cart.length);
         const cartItems = document.getElementById("cartItems");
         const cartTotal = document.getElementById("cartTotal");
         const cartSubtotal = document.getElementById("cartSubtotal");
@@ -802,10 +1129,8 @@
         const emptyCartMessage = document.getElementById("emptyCartMessage");
         const cartContent = document.getElementById("cartContent");
 
-        // Warenkorbzähler aktualisieren
         cartCount.textContent = cart.length;
 
-        // Leeren Warenkorb anzeigen, wenn keine Artikel vorhanden sind
         if (cart.length === 0) {
           emptyCartMessage.classList.remove("hidden");
           cartContent.classList.add("hidden");
@@ -814,7 +1139,6 @@
           cartContent.classList.remove("hidden");
         }
 
-        // Warenkorb-Elemente rendern
         cartItems.innerHTML = "";
         if (cart.length > 0) {
           cart.forEach((item, index) => {
@@ -850,11 +1174,10 @@
           cartSubtotal.textContent = "€0.00";
         }
 
-        // Warenkorb-Badges aktualisieren
         updateCartBadges();
       }
 
-      // Artikel aus dem Warenkorb entfernen
+      // Remove from cart
       function removeFromCart(index) {
         const removed = cart.splice(index, 1)[0];
         updateCart();
@@ -864,7 +1187,7 @@
         );
       }
 
-      // Artikel zum Warenkorb hinzufügen
+      // Add to cart
       function addToCart(stickerId) {
         const sticker = stickers.find((s) => s.id === stickerId);
         if (sticker) {
@@ -874,11 +1197,11 @@
         }
       }
 
-      // Kaufprozess
+      // Handle purchase
       function handlePurchase() {
         if (!user) {
           showToast("Bitte melde dich an, um zu kaufen!", "error");
-          setTimeout(() => login(), 1000);
+          showSection("loginSectionMain");
           return;
         }
 
@@ -890,54 +1213,87 @@
         const total = cart
           .reduce((sum, item) => sum + item.price, 0)
           .toFixed(2);
+        const orderId = `#${Math.floor(Math.random() * 1000000)}`;
+        const order = {
+          orderId,
+          userEmail: user.email,
+          items: cart,
+          total: parseFloat(total),
+          date: new Date().toISOString(),
+        };
 
-        // Erfolgsmeldung mit mehr Details
+        orders.push(order);
+        localStorage.setItem("orders", JSON.stringify(orders));
+
         showToast("Bestellung erfolgreich aufgegeben!", "success");
 
         setTimeout(() => {
           alert(
-            `Bestellung erfolgreich!\n\nDetails:\n- Bestellnummer: #${Math.floor(
-              Math.random() * 1000000
-            )}\n- Versand an: ${user.email}\n- Artikel: ${
-              cart.length
-            }\n- Gesamtbetrag: €${total}\n\nEine Bestätigungs-E-Mail wurde an ${
-              user.email
-            } gesendet.\n\nHinweis: Bestellungen sind endgültig, keine Rückerstattungen möglich.`
+            `Bestellung erfolgreich!\n\nDetails:\n- Bestellnummer: ${orderId}\n- Versand an: ${user.email}\n- Artikel: ${cart.length}\n- Gesamtbetrag: €${total}\n\nEine Bestätigungs-E-Mail wurde an ${user.email} gesendet.\n\nHinweis: Bestellungen sind endgültig, keine Rückerstattungen möglich.`
           );
         }, 1000);
 
         cart = [];
         updateCart();
-        showSection("home");
+        showSection("homeSection");
       }
 
-      // Menü umschalten
+      // Toggle menu
       function toggleMenu() {
+        console.log("Toggling menu");
         document.body.classList.toggle("nav-open");
       }
 
-      // Sektion anzeigen
-      function showSection(section) {
-        const sections = document.querySelectorAll("section");
-        sections.forEach((s) => s.classList.add("hidden"));
-        document.getElementById(`${section}Section`).classList.remove("hidden");
-        document.body.classList.remove("nav-open");
+      // Show section
+      function showSection(sectionId) {
+        console.log(`Showing section: ${sectionId}`);
+        try {
+          const sections = document.querySelectorAll("section");
+          sections.forEach((s) => s.classList.add("hidden"));
 
-        // Scroll nach oben
-        window.scrollTo({ top: 0, behavior: "smooth" });
+          const targetSection = document.getElementById(sectionId);
+          if (!targetSection) {
+            console.error(`Section with ID ${sectionId} not found`);
+            showToast(`Seite ${sectionId} nicht gefunden!`, "error");
+            document.getElementById("homeSection").classList.remove("hidden");
+            return;
+          }
 
-        // Kategoriepills zurücksetzen wenn Startseite angezeigt wird
-        if (section === "home") {
-          selectCategory(document.getElementById("categoryFilter").value);
+          targetSection.classList.remove("hidden");
+          document.body.classList.remove("nav-open");
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+
+          if (sectionId === "homeSection") {
+            selectCategory(document.getElementById("categoryFilter").value);
+          } else if (sectionId === "adminSection") {
+            renderAdminDashboard();
+          } else if (sectionId === "loginSectionMain") {
+            console.log("Login section shown, ensuring form visibility");
+            const loginForm = document.getElementById("loginForm");
+            if (loginForm) loginForm.classList.remove("hidden");
+            const registerForm = document.getElementById("registerForm");
+            if (registerForm) registerForm.classList.add("hidden");
+          }
+        } catch (error) {
+          console.error("Error in showSection:", error);
+          showToast("Ein Fehler ist aufgetreten!", "error");
+          document.getElementById("homeSection").classList.remove("hidden");
         }
       }
 
-      // Initiales Rendern
-      renderStickers(stickers);
-      updateCart();
-      showSection("home");
+      // Initial rendering
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("DOM fully loaded");
+        initUsers();
+        renderStickers(stickers);
+        updateCart();
+        updateLoginSection();
+        showSection("homeSection");
+        selectCategory("Alle");
+      });
 
-      // Event Listener für Suchfeld
+      // Search input listeners
       document
         .getElementById("searchInput")
         .addEventListener("input", function () {
@@ -957,9 +1313,6 @@
             200
           )
         );
-
-      // Kategoriepills initialisieren
-      selectCategory("Alle");
     </script>
   </body>
 </html>
