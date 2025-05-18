@@ -9,6 +9,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
+    <!-- EmailJS Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
       .sticker-card {
         transition: transform 0.3s, box-shadow 0.3s;
@@ -571,6 +573,11 @@
     <script>
       console.log("Script loaded at", new Date().toLocaleString());
 
+      // Initialize EmailJS with your User ID
+      (function () {
+        emailjs.init("9n_IzzLSxM5ouT5z2"); // Replace with your EmailJS User ID
+      })();
+
       // Sticker-Daten
       const stickers = [
         {
@@ -698,9 +705,9 @@
       // Initialize users
       function initUsers() {
         let users = JSON.parse(localStorage.getItem("users")) || [];
-        if (!users.some((u) => u.email === "admin@stickerzz.de")) {
+        if (!users.some((u) => u.email === "ata-admin")) {
           users.push({
-            email: "admin@stickerzz.de",
+            email: "ata-admin",
             password: simpleHash("admin123"),
             role: "admin",
           });
@@ -836,12 +843,7 @@
                     <i class="fas fa-caret-down ml-1"></i>
                   </button>
                   <div class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block z-20">
-                    <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                      <i class="fas fa-cog mr-2 text-gray-600"></i>Einstellungen
-                    </a>
-                    <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                      <i class="fas fa-history mr-2 text-gray-600"></i>Bestellverlauf
-                    </a>
+                    
                     <div class="border-t border-gray-200 my-1"></div>
                     <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50">
                       <i class="fas fa-sign-out-alt mr-2"></i>Abmelden
@@ -1197,6 +1199,75 @@
         }
       }
 
+      function sendOrderEmails(order) {
+        const serviceID = "service_o8q5ebh"; // Your EmailJS Service ID
+        const buyerTemplateID = "template_hsuxylf"; // Buyer template ID
+        const adminTemplateID = "template_1lk6c7i"; // Admin template ID
+        const adminEmail = "atahh2005@gmail.com";
+
+        // Validate email addresses
+        if (
+          !order.userEmail ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(order.userEmail)
+        ) {
+          console.error("Invalid or missing user email:", order.userEmail);
+          showToast("Fehler: Ungültige Käufer-E-Mail-Adresse!", "error");
+          return;
+        }
+        if (!adminEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
+          console.error("Invalid or missing admin email:", adminEmail);
+          showToast("Fehler: Ungültige Admin-E-Mail-Adresse!", "error");
+          return;
+        }
+
+        // Prepare email parameters with both to_email and user_email for compatibility
+        const emailParams = {
+          to_email: order.userEmail,
+          user_email: order.userEmail, // Add this for templates that might expect user_email
+          order_id: order.orderId,
+          order_date: new Date(order.date).toLocaleString(),
+          items: order.items.map((item) => ({
+            name: item.name,
+            category: item.category,
+            price: item.price.toFixed(2),
+          })),
+          total: order.total.toFixed(2),
+        };
+
+        // Send email to buyer
+        emailjs
+          .send(serviceID, buyerTemplateID, emailParams)
+          .then(() => {
+            console.log("Buyer email sent successfully to", order.userEmail);
+            showToast(
+              "Bestellbestätigung an deine E-Mail gesendet!",
+              "success"
+            );
+          })
+          .catch((error) => {
+            console.error("Error sending buyer email:", error);
+            showToast("Fehler beim Senden der Bestellbestätigung!", "error");
+          });
+
+        // Send email to admin
+        emailjs
+          .send(serviceID, adminTemplateID, {
+            ...emailParams,
+            to_email: adminEmail,
+            user_email: adminEmail, // Add this for compatibility
+          })
+          .then(() => {
+            console.log("Admin email sent successfully to", adminEmail);
+          })
+          .catch((error) => {
+            console.error("Error sending admin email:", error);
+            showToast(
+              "Fehler beim Senden der Admin-Benachrichtigung!",
+              "error"
+            );
+          });
+      }
+
       // Handle purchase
       function handlePurchase() {
         if (!user) {
@@ -1224,6 +1295,9 @@
 
         orders.push(order);
         localStorage.setItem("orders", JSON.stringify(orders));
+
+        // Send emails
+        sendOrderEmails(order);
 
         showToast("Bestellung erfolgreich aufgegeben!", "success");
 
